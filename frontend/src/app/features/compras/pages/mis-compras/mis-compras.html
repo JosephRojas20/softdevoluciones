@@ -1,0 +1,111 @@
+<header class="page-heading">
+  <div>
+    <p class="breadcrumb">Mi cuenta / Mis compras</p>
+    <h1>Mis compras</h1>
+    <p>Consulta tus compras realizadas y sus productos.</p>
+  </div>
+
+  <button
+    class="refresh-button"
+    type="button"
+    [disabled]="cargando()"
+    (click)="cargarCompras(pagina()?.number ?? 0)"
+  >
+    Actualizar
+  </button>
+</header>
+
+<section class="card" aria-label="Listado de compras">
+  @if (cargando()) {
+    <div class="empty-state" role="status">
+      Cargando compras...
+    </div>
+  } @else if (error()) {
+    <div class="empty-state">
+      <p class="error" role="alert">{{ error() }}</p>
+
+      <button
+        class="refresh-button"
+        type="button"
+        (click)="cargarCompras(pagina()?.number ?? 0)"
+      >
+        Reintentar
+      </button>
+    </div>
+  } @else if (pagina(); as datos) {
+    @if (datos.content.length === 0) {
+      <div class="empty-state">
+        <h2>Aún no tienes compras registradas</h2>
+        <p>Cuando tengas compras, aparecerán en esta sección.</p>
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>N.º de compra</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th>Total</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (compra of datos.content; track compra.id) {
+              <tr>
+                <td class="purchase-id">#{{ compra.id }}</td>
+
+                <td>
+                  {{ compra.fecha | date:'dd/MM/yyyy' }}
+                </td>
+
+                <td>
+                  <span class="badge">{{ compra.estado }}</span>
+                </td>
+
+                <td>
+                  {{ compra.total | currency:'PEN':'S/ ':'1.2-2' }}
+                </td>
+
+                <td>
+                  <a
+                    class="detail-link"
+                    [routerLink]="['/compras', compra.id]"
+                  >
+                    Ver detalles
+                  </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination">
+        <span>
+          Página {{ datos.number + 1 }} de {{ datos.totalPages }}
+          · {{ datos.totalElements }} compras
+        </span>
+
+        <div>
+          <button
+            type="button"
+            [disabled]="datos.first"
+            (click)="cargarCompras(datos.number - 1)"
+          >
+            Anterior
+          </button>
+
+          <button
+            type="button"
+            [disabled]="datos.last"
+            (click)="cargarCompras(datos.number + 1)"
+          >
+            Siguiente
+          </button>
+        </div>
+      </footer>
+    }
+  }
+</section>

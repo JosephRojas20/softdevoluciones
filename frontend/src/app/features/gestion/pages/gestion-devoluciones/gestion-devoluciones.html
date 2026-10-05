@@ -1,0 +1,333 @@
+<header class="page-header">
+  <div>
+    <h1>Gestión de devoluciones</h1>
+    <p>Revisa y gestiona las solicitudes de devolución de los clientes.</p>
+  </div>
+
+  <button
+    class="button secondary"
+    type="button"
+    [disabled]="ocupada"
+    (click)="actualizar()"
+  >
+    Actualizar
+  </button>
+</header>
+
+<form class="filters" (ngSubmit)="buscar()">
+  <div class="filter-field">
+    <label for="estadoFiltro">Estado</label>
+    <select id="estadoFiltro" [formControl]="estadoFiltro">
+      <option value="">Todos</option>
+
+      @for (estado of estados; track estado.valor) {
+        <option [value]="estado.valor">{{ estado.nombre }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="filter-field">
+    <label for="motivoFiltro">Motivo</label>
+    <select id="motivoFiltro" [formControl]="motivoFiltro">
+      <option value="">Todos</option>
+
+      @for (motivo of motivos; track motivo.valor) {
+        <option [value]="motivo.valor">{{ motivo.nombre }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="filter-field">
+    <label for="desdeFiltro">Fecha desde</label>
+    <input
+      id="desdeFiltro"
+      type="date"
+      [formControl]="desdeFiltro"
+    />
+  </div>
+
+  <div class="filter-field">
+    <label for="hastaFiltro">Fecha hasta</label>
+    <input
+      id="hastaFiltro"
+      type="date"
+      [formControl]="hastaFiltro"
+    />
+  </div>
+
+  <div class="filter-actions">
+    <button class="button primary" type="submit" [disabled]="ocupada">
+      Buscar
+    </button>
+
+    <button
+      class="button secondary"
+      type="button"
+      [disabled]="ocupada"
+      (click)="limpiarFiltros()"
+    >
+      Limpiar
+    </button>
+  </div>
+</form>
+
+<section class="card">
+  @if (cargando()) {
+    <div class="state-message" role="status">
+      Cargando solicitudes…
+    </div>
+  } @else if (error()) {
+    <div class="state-message">
+      <p class="error-text" role="alert">{{ error() }}</p>
+      <button class="button secondary" type="button" (click)="buscar()">
+        Reintentar
+      </button>
+    </div>
+  } @else if (pagina(); as datos) {
+    @if (datos.content.length === 0) {
+      <div class="state-message">
+        No se encontraron solicitudes con los filtros seleccionados.
+      </div>
+    } @else {
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>N.º solicitud</th>
+              <th>Cliente</th>
+              <th>N.º compra</th>
+              <th>Fecha</th>
+              <th>Estado</th>
+              <th class="amount">Total</th>
+              <th class="actions">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (solicitud of datos.content; track solicitud.id) {
+              <tr>
+                <td class="identifier">#D-{{ solicitud.id }}</td>
+                <td>Cliente #{{ solicitud.usuarioId }}</td>
+                <td>#{{ solicitud.compraId }}</td>
+
+                <td>
+                  {{ solicitud.fechaSolicitud | date:'dd/MM/yyyy' }}
+                </td>
+
+                <td>
+                  <span
+                    class="status"
+                    [class.solicitada]="solicitud.estado === 'SOLICITADA'"
+                    [class.revision]="solicitud.estado === 'EN_REVISION'"
+                    [class.aprobada]="solicitud.estado === 'APROBADA'"
+                    [class.rechazada]="solicitud.estado === 'RECHAZADA'"
+                    [class.completada]="solicitud.estado === 'COMPLETADA'"
+                  >
+                    {{ nombreEstado(solicitud.estado) }}
+                  </span>
+                </td>
+
+                <td class="amount">
+                  {{ solicitud.importe | currency:'PEN':'S/ ':'1.2-2' }}
+                </td>
+
+                <td class="actions">
+                  <button
+                    class="detail-button"
+                    type="button"
+                    [disabled]="ocupada"
+                    (click)="revisar(solicitud.id)"
+                  >
+                    {{
+                      accionesPermitidas(solicitud.estado).length
+                        ? 'Revisar'
+                        : 'Ver'
+                    }}
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination">
+        <span>
+          {{ datos.totalElements }} solicitudes
+          · Página {{ datos.number + 1 }} de {{ datos.totalPages }}
+        </span>
+
+        <div class="pagination-buttons">
+          <button
+            class="button secondary"
+            type="button"
+            [disabled]="datos.first || ocupada"
+            (click)="cargar(datos.number - 1)"
+          >
+            Anterior
+          </button>
+
+          <button
+            class="button secondary"
+            type="button"
+            [disabled]="datos.last || ocupada"
+            (click)="cargar(datos.number + 1)"
+          >
+            Siguiente
+          </button>
+        </div>
+      </footer>
+    }
+  }
+</section>
+
+@if (cargandoDetalle()) {
+  <div class="card detail-card state-message" role="status">
+    Cargando la solicitud…
+  </div>
+}
+
+@if (errorDetalle()) {
+  <div class="feedback error-feedback" role="alert">
+    {{ errorDetalle() }}
+  </div>
+}
+
+@if (exito()) {
+  <div class="feedback success-feedback" role="status">
+    {{ exito() }}
+  </div>
+}
+
+@if (seleccionada(); as solicitud) {
+  <section class="card detail-card">
+    <header class="detail-header">
+      <div>
+        <h2>Solicitud #D-{{ solicitud.id }}</h2>
+        <p>
+          Cliente #{{ solicitud.usuarioId }}
+          · Compra #{{ solicitud.compraId }}
+          · {{ solicitud.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}
+        </p>
+      </div>
+
+      <button
+        class="button secondary"
+        type="button"
+        [disabled]="ocupada"
+        (click)="cerrarDetalle()"
+      >
+        Cerrar detalle
+      </button>
+    </header>
+
+    <div class="detail-information">
+      <div>
+        <span class="field-label">Estado actual</span>
+        <strong>{{ nombreEstado(solicitud.estado) }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Motivo</span>
+        <strong>{{ nombreMotivo(solicitud.motivo) }}</strong>
+      </div>
+    </div>
+
+    @if (solicitud.comentario) {
+      <div class="text-block">
+        <span class="field-label">Descripción del cliente</span>
+        <p>{{ solicitud.comentario }}</p>
+      </div>
+    }
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="quantity">Cantidad</th>
+            <th class="amount">Precio unitario</th>
+            <th class="amount">Importe</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (item of solicitud.detalles; track item.detalleCompraId) {
+            <tr>
+              <td>{{ item.producto }}</td>
+              <td class="quantity">{{ item.cantidad }}</td>
+              <td class="amount">
+                {{ item.precioUnitario | currency:'PEN':'S/ ':'1.2-2' }}
+              </td>
+              <td class="amount">
+                {{ item.importe | currency:'PEN':'S/ ':'1.2-2' }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">No se recibieron líneas de devolución.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="detail-total">
+      <span>Total devolución</span>
+      <strong>
+        {{ solicitud.importe | currency:'PEN':'S/ ':'1.2-2' }}
+      </strong>
+    </div>
+
+    @if (accionesPermitidas(solicitud.estado).length > 0) {
+      <div class="review-form">
+        <label for="observacion">Observación del operador</label>
+
+        <textarea
+          id="observacion"
+          rows="4"
+          maxlength="1000"
+          [formControl]="observacion"
+          [readOnly]="ocupada"
+          placeholder="Escribe el resultado de la revisión."
+        ></textarea>
+
+        <p class="review-help">
+          La observación es obligatoria cuando rechazas una solicitud.
+        </p>
+
+        <div class="review-actions">
+          @for (
+            estado of accionesPermitidas(solicitud.estado);
+            track estado
+          ) {
+            <button
+              class="button"
+              [class.primary]="estado !== 'RECHAZADA'"
+              [class.danger]="estado === 'RECHAZADA'"
+              type="button"
+              [disabled]="ocupada"
+              (click)="cambiarEstado(estado)"
+            >
+              {{ nombreAccion(estado) }}
+            </button>
+          }
+        </div>
+
+        @if (guardando()) {
+          <p class="review-help" role="status">Guardando cambio de estado…</p>
+        }
+      </div>
+    } @else {
+      <div class="operator-note">
+        <span class="field-label">Observación del operador</span>
+        <p>
+          {{ solicitud.observacionOperador || 'Sin observación registrada.' }}
+        </p>
+        <p class="terminal-note">
+          Esta solicitud finalizó y no admite más cambios de estado.
+        </p>
+      </div>
+    }
+  </section>
+}

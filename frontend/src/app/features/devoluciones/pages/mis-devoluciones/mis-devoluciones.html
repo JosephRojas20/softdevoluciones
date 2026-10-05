@@ -1,0 +1,256 @@
+<header class="page-header">
+  <div>
+    <h1>Mis devoluciones</h1>
+    <p>Aquí puedes ver el estado de tus solicitudes de devolución.</p>
+  </div>
+
+  <button
+    class="button secondary"
+    type="button"
+    (click)="actualizar()"
+    [disabled]="cargando() || cargandoDetalle()"
+  >
+    {{ cargando() ? 'Cargando…' : 'Actualizar' }}
+  </button>
+</header>
+
+<section class="card">
+  @if (cargando()) {
+    <div class="state-message" role="status">
+      Cargando tus devoluciones…
+    </div>
+  } @else if (error()) {
+    <div class="state-message">
+      <p class="error-text" role="alert">{{ error() }}</p>
+
+      <button
+        class="button secondary"
+        type="button"
+        (click)="actualizar()"
+      >
+        Reintentar
+      </button>
+    </div>
+  } @else if (pagina(); as datos) {
+    @if (datos.content.length === 0) {
+      <div class="state-message">
+        <h2>No tienes solicitudes de devolución</h2>
+        <p>
+          Puedes solicitar una devolución desde el detalle de tus compras.
+        </p>
+
+        <a class="button primary" routerLink="/compras">
+          Ver mis compras
+        </a>
+      </div>
+    } @else {
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>N.º solicitud</th>
+              <th>N.º compra</th>
+              <th>Fecha</th>
+              <th>Productos</th>
+              <th>Estado</th>
+              <th class="amount">Total devolución</th>
+              <th class="actions">Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (solicitud of datos.content; track solicitud.id) {
+              <tr>
+                <td class="identifier">#D-{{ solicitud.id }}</td>
+
+                <td>
+                  <a
+                    class="purchase-link"
+                    [routerLink]="['/compras', solicitud.compraId]"
+                  >
+                    #{{ solicitud.compraId }}
+                  </a>
+                </td>
+
+                <td>
+                  {{ solicitud.fechaSolicitud | date:'dd/MM/yyyy' }}
+                </td>
+
+                <td>
+                  {{ solicitud.detalles.length }}
+                  {{ solicitud.detalles.length === 1 ? 'producto' : 'productos' }}
+                </td>
+
+                <td>
+                  <span
+                    class="status"
+                    [class.solicitada]="solicitud.estado === 'SOLICITADA'"
+                    [class.revision]="solicitud.estado === 'EN_REVISION'"
+                    [class.aprobada]="solicitud.estado === 'APROBADA'"
+                    [class.rechazada]="solicitud.estado === 'RECHAZADA'"
+                    [class.completada]="solicitud.estado === 'COMPLETADA'"
+                  >
+                    {{ nombreEstado(solicitud.estado) }}
+                  </span>
+                </td>
+
+                <td class="amount">
+                  {{ solicitud.importe | currency:'PEN':'S/ ':'1.2-2' }}
+                </td>
+
+                <td class="actions">
+                  <button
+                    class="detail-button"
+                    type="button"
+                    (click)="verDetalle(solicitud.id)"
+                    [disabled]="cargandoDetalle()"
+                    [attr.aria-label]="'Ver detalle de solicitud ' + solicitud.id"
+                  >
+                    Ver detalle
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="pagination">
+        <span>
+          {{ datos.totalElements }}
+          {{ datos.totalElements === 1 ? 'solicitud' : 'solicitudes' }}
+          · Página {{ datos.number + 1 }} de {{ datos.totalPages }}
+        </span>
+
+        <div class="pagination-buttons">
+          <button
+            class="button secondary"
+            type="button"
+            [disabled]="datos.first || cargandoDetalle()"
+            (click)="cargarDevoluciones(datos.number - 1)"
+          >
+            Anterior
+          </button>
+
+          <button
+            class="button secondary"
+            type="button"
+            [disabled]="datos.last || cargandoDetalle()"
+            (click)="cargarDevoluciones(datos.number + 1)"
+          >
+            Siguiente
+          </button>
+        </div>
+      </footer>
+    }
+  }
+</section>
+
+<div aria-live="polite">
+  @if (cargandoDetalle()) {
+    <div class="card detail-card state-message" role="status">
+      Cargando el detalle de la solicitud…
+    </div>
+  }
+
+  @if (errorDetalle()) {
+    <div class="card detail-card state-message">
+      <p class="error-text" role="alert">{{ errorDetalle() }}</p>
+
+      <button
+        class="button secondary"
+        type="button"
+        (click)="cerrarDetalle()"
+      >
+        Cerrar
+      </button>
+    </div>
+  }
+</div>
+
+@if (detalle(); as solicitud) {
+  <section class="card detail-card">
+    <header class="detail-header">
+      <div>
+        <h2>Solicitud #D-{{ solicitud.id }}</h2>
+        <p>
+          Compra #{{ solicitud.compraId }}
+          · {{ solicitud.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}
+        </p>
+      </div>
+
+      <button
+        class="button secondary"
+        type="button"
+        (click)="cerrarDetalle()"
+      >
+        Cerrar detalle
+      </button>
+    </header>
+
+    <div class="detail-information">
+      <div>
+        <span class="field-label">Estado</span>
+        <strong>{{ nombreEstado(solicitud.estado) }}</strong>
+      </div>
+
+      <div>
+        <span class="field-label">Motivo</span>
+        <strong>{{ nombreMotivo(solicitud.motivo) }}</strong>
+      </div>
+    </div>
+
+    @if (solicitud.comentario) {
+      <div class="text-block">
+        <span class="field-label">Tu descripción</span>
+        <p>{{ solicitud.comentario }}</p>
+      </div>
+    }
+
+    @if (solicitud.observacionOperador) {
+      <div class="operator-note">
+        <span class="field-label">Observación del operador</span>
+        <p>{{ solicitud.observacionOperador }}</p>
+      </div>
+    }
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th class="amount">Precio unitario</th>
+            <th class="quantity">Cantidad</th>
+            <th class="amount">Importe</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (item of solicitud.detalles; track item.detalleCompraId) {
+            <tr>
+              <td>{{ item.producto }}</td>
+              <td class="amount">
+                {{ item.precioUnitario | currency:'PEN':'S/ ':'1.2-2' }}
+              </td>
+              <td class="quantity">{{ item.cantidad }}</td>
+              <td class="amount">
+                {{ item.importe | currency:'PEN':'S/ ':'1.2-2' }}
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="4">La respuesta no contiene líneas de devolución.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <footer class="detail-total">
+      <span>Total de la solicitud</span>
+      <strong>
+        {{ solicitud.importe | currency:'PEN':'S/ ':'1.2-2' }}
+      </strong>
+    </footer>
+  </section>
+}

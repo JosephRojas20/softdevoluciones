@@ -1,0 +1,133 @@
+<nav class="breadcrumb" aria-label="Ruta de navegación">
+  <a routerLink="/compras">Mis compras</a>
+  <span aria-hidden="true">/</span>
+  <span>Detalle de compra</span>
+</nav>
+
+@if (cargando()) {
+  <section class="card message" role="status">
+    Cargando detalle de compra...
+  </section>
+} @else if (error()) {
+  <section class="card message">
+    <h1>No pudimos mostrar la compra</h1>
+    <p class="error" role="alert">{{ error() }}</p>
+
+    <a class="secondary-link" routerLink="/compras">
+      Volver a mis compras
+    </a>
+  </section>
+} @else if (compra(); as datos) {
+  <header class="page-heading">
+    <div>
+      <h1>Detalle de compra #{{ datos.id }}</h1>
+
+      <div class="purchase-meta">
+        <span>
+          Realizada el {{ datos.fecha | date:'dd/MM/yyyy' }}
+        </span>
+
+        <span class="badge">{{ datos.estado }}</span>
+      </div>
+    </div>
+
+    <a class="secondary-link" routerLink="/compras">
+      Volver
+    </a>
+  </header>
+
+  <section class="card" aria-label="Productos de la compra">
+    @if (datos.detalles.length === 0) {
+      <div class="message">
+        Esta compra no tiene productos registrados.
+      </div>
+    } @else {
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Precio unitario</th>
+              <th>Cantidad</th>
+              <th>Subtotal</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (linea of datos.detalles; track linea.detalleCompraId) {
+              <tr>
+                <td>
+                  <div class="product">
+                    <div class="product-image">
+                      @if (
+                        linea.imagenUrl &&
+                        !imagenesFallidas().has(linea.detalleCompraId)
+                      ) {
+                        <img
+                          [src]="linea.imagenUrl"
+                          [alt]="linea.nombre"
+                          loading="lazy"
+                          (error)="marcarImagenFallida(linea.detalleCompraId)"
+                        />
+                      } @else {
+                        <span class="image-placeholder">
+                          Sin imagen
+                        </span>
+                      }
+                    </div>
+
+                    <div class="product-info">
+                      <strong>{{ linea.nombre }}</strong>
+
+                      @if (linea.descripcion) {
+                        <p>{{ linea.descripcion }}</p>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <td class="amount">
+                  {{
+                    linea.precioUnitario
+                      | currency:'PEN':'S/ ':'1.2-2'
+                  }}
+                </td>
+
+                <td>{{ linea.cantidad }}</td>
+
+                <td class="amount">
+                  {{
+                    linea.precioUnitario * linea.cantidad
+                      | currency:'PEN':'S/ ':'1.2-2'
+                  }}
+                </td>
+
+                <td>
+                    <a
+                        class="button primary"
+                        [routerLink]="[
+                        '/compras',
+                        datos.id,
+                        'devolucion',
+                        linea.detalleCompraId
+                        ]"
+                    >
+                    Solicitar devolución
+                    </a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <footer class="purchase-footer">
+      <span>Total de la compra</span>
+      <strong>
+        {{ datos.total | currency:'PEN':'S/ ':'1.2-2' }}
+      </strong>
+    </footer>
+  </section>
+}

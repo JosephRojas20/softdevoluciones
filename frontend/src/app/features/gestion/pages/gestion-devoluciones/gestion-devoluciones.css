@@ -1,0 +1,147 @@
+.filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 22px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid #e8ecf1;
+  border-radius: 12px;
+}
+
+.filter-field {
+  min-width: 0;
+}
+
+.filter-field label,
+.review-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: #344054;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.filter-field input,
+.filter-field select,
+.review-form textarea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  padding: 11px 12px;
+  border: 1px solid #dce1e8;
+  border-radius: 7px;
+  background: #fff;
+  color: #273244;
+  font: inherit;
+  font-size: 13px;
+}
+
+.filter-field input:focus,
+.filter-field select:focus,
+.review-form textarea:focus {
+  outline: none;
+  border-color: #f47721;
+  box-shadow: 0 0 0 3px rgb(244 119 33 / 12%);
+}
+
+.filter-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.review-form {
+  padding: 24px;
+  border-top: 1px solid #edf0f4;
+}
+
+.review-form textarea {
+  min-height: 110px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.review-help,
+.terminal-note {
+  color: #687386;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.review-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.danger {
+  color: #fff;
+  background: #c83c3c;
+  border-color: #c83c3c;
+}
+
+.danger:hover:not(:disabled) {
+  background: #b12e2e;
+}
+
+.feedback {
+  margin-top: 20px;
+  padding: 14px 18px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.error-feedback {
+  color: #b42318;
+  background: #fff1f2;
+  border-color: #fecaca;
+}
+
+.success-feedback {
+  color: #24763e;
+  background: #edf9ef;
+  border-color: #c9ebd0;
+}
+
+@media (max-width: 1200px) {
+  .filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .filter-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 600px) {
+  .filters {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  .filter-actions {
+    grid-column: auto;
+  }
+
+  .filter-actions .button {
+    flex: 1;
+  }
+
+  .review-form {
+    padding: 20px;
+  }
+
+  .review-actions {
+    flex-direction: column;
+  }
+
+  .review-actions .button {
+    width: 100%;
+  }
+}

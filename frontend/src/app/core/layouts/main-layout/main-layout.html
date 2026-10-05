@@ -1,0 +1,100 @@
+<div class="app-layout">
+  @if (menuAbierto()) {
+    <button
+      class="overlay"
+      type="button"
+      aria-label="Cerrar menú"
+      (click)="cerrarMenu()"
+    ></button>
+  }
+
+  <aside class="sidebar" [class.open]="menuAbierto()">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path
+          d="M12 3 21 8v8l-9 5-9-5V8l9-5Z"
+          stroke="currentColor"
+          stroke-width="1.8"
+          stroke-linejoin="round"
+        />
+        <path
+          d="m3 8 9 5 9-5M12 13v8"
+          stroke="currentColor"
+          stroke-width="1.8"
+        />
+      </svg>
+      <span>SoftDevoluciones</span>
+    </div>
+
+    <p class="menu-label">
+      {{ esCliente() ? 'MI CUENTA' : 'GESTIÓN' }}
+    </p>
+
+    <nav aria-label="Menú principal">
+      @if (esCliente()) {
+        <a
+          routerLink="/compras"
+          routerLinkActive="active"
+          (click)="cerrarMenu()"
+        >
+          Mis compras
+        </a>
+
+        <a
+          routerLink="/devoluciones"
+          routerLinkActive="active"
+          (click)="cerrarMenu()"
+        >
+          Mis devoluciones
+        </a>
+      } @else {
+        <a
+          routerLink="/gestion/devoluciones"
+          routerLinkActive="active"
+          (click)="cerrarMenu()"
+        >
+          Gestión de devoluciones
+        </a>
+      }
+    </nav>
+
+    <button
+      class="logout"
+      type="button"
+      (click)="cerrarSesion()"
+    >
+      Cerrar sesión
+    </button>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <button
+        class="menu-toggle"
+        type="button"
+        aria-label="Abrir o cerrar menú"
+        [attr.aria-expanded]="menuAbierto()"
+        (click)="menuAbierto.set(!menuAbierto())"
+      >
+        ☰
+      </button>
+
+      <span class="topbar-description">
+        Sistema de gestión de devoluciones
+      </span>
+
+      <div class="user">
+        <span class="avatar">{{ iniciales() }}</span>
+
+        <div class="user-info">
+          <strong>{{ authService.usuario()?.nombre }}</strong>
+          <span>{{ authService.usuario()?.rol }}</span>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-content">
+      <router-outlet />
+    </main>
+  </div>
+</div>

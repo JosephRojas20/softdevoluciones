@@ -1,0 +1,209 @@
+<nav class="breadcrumb" aria-label="Ruta de navegación">
+  <a routerLink="/compras">Mis compras</a>
+  <span aria-hidden="true">›</span>
+
+  @if (compra(); as datos) {
+    <a [routerLink]="['/compras', datos.id]">
+      Compra #{{ datos.id }}
+    </a>
+    <span aria-hidden="true">›</span>
+  }
+
+  <span>Solicitar devolución</span>
+</nav>
+
+<header class="page-header">
+  <h1>Solicitar devolución</h1>
+  <p>Completa la información de tu solicitud de devolución.</p>
+</header>
+
+@if (cargando()) {
+  <div class="state-card" role="status">
+    Cargando el producto…
+  </div>
+} @else if (errorCarga()) {
+  <div class="state-card">
+    <p class="error-text" role="alert">{{ errorCarga() }}</p>
+    <a class="button secondary" routerLink="/compras">
+      Volver a mis compras
+    </a>
+  </div>
+} @else if (solicitudId() !== null) {
+  <section class="success-card" role="status">
+    <div class="success-icon" aria-hidden="true">✓</div>
+
+    <h2>Solicitud registrada</h2>
+
+    <p>
+      Tu solicitud de devolución
+      <strong>#{{ solicitudId() }}</strong>
+      fue enviada correctamente.
+    </p>
+
+    <p class="muted">
+      Su estado inicial es Solicitada.
+    </p>
+
+    <div class="success-actions">
+      <a class="button primary" routerLink="/devoluciones">
+        Mis devoluciones
+      </a>
+
+      @if (compra(); as datos) {
+        <a class="button secondary"
+           [routerLink]="['/compras', datos.id]">
+          Volver a la compra
+        </a>
+      }
+    </div>
+  </section>
+} @else {
+  @if (producto(); as item) {
+    @if (compra(); as datos) {
+      <section class="request-card">
+        <aside class="product-summary">
+          <div class="product-image">
+            @if (item.imagenUrl && !imagenFallida()) {
+              <img
+                [src]="item.imagenUrl"
+                [alt]="item.nombre"
+                (error)="imagenFallida.set(true)"
+              />
+            } @else {
+              <span>Sin imagen</span>
+            }
+          </div>
+
+          <div class="product-information">
+            <h2>{{ item.nombre }}</h2>
+
+            @if (item.descripcion) {
+              <p class="description">{{ item.descripcion }}</p>
+            }
+
+            <p>
+              Precio unitario:
+              <strong>
+                {{ item.precioUnitario | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+            </p>
+
+            <p>
+              Unidades compradas:
+              <strong>{{ item.cantidad }}</strong>
+            </p>
+
+            <p class="availability-note">
+              La disponibilidad para devolución se verificará
+              al enviar la solicitud.
+            </p>
+          </div>
+        </aside>
+
+        <form
+          class="request-form"
+          #solicitudForm="ngForm"
+          (ngSubmit)="enviarSolicitud()"
+        >
+          <fieldset [disabled]="enviando()">
+            <div class="form-row">
+              <label for="cantidad">Cantidad a devolver</label>
+
+              <div>
+                <div class="quantity-control">
+                  <input
+                    id="cantidad"
+                    name="cantidad"
+                    type="number"
+                    min="1"
+                    [max]="item.cantidad"
+                    step="1"
+                    required
+                    [(ngModel)]="cantidad"
+                  />
+
+                  <span class="quantity-limit">
+                    Máx. {{ item.cantidad }} compradas
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <label for="motivo">Motivo de devolución</label>
+
+              <select
+                id="motivo"
+                name="motivo"
+                required
+                [(ngModel)]="motivo"
+              >
+                <option value="" disabled>Selecciona un motivo</option>
+
+                @for (opcion of motivos; track opcion.valor) {
+                  <option [value]="opcion.valor">
+                    {{ opcion.etiqueta }}
+                  </option>
+                }
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="comentario">
+                Descripción
+                <span class="optional">(opcional)</span>
+              </label>
+
+              <div>
+                <textarea
+                  id="comentario"
+                  name="comentario"
+                  rows="4"
+                  maxlength="1000"
+                  placeholder="Describe lo ocurrido con el producto."
+                  [(ngModel)]="comentario"
+                ></textarea>
+
+                <div class="character-count">
+                  {{ comentario.length }}/1000
+                </div>
+              </div>
+            </div>
+
+            <div class="estimated-total">
+              <span>Importe estimado</span>
+              <strong>
+                {{ importeEstimado | currency:'PEN':'S/ ':'1.2-2' }}
+              </strong>
+            </div>
+
+            @if (errorEnvio()) {
+              <div class="error-message" role="alert">
+                {{ errorEnvio() }}
+              </div>
+            }
+
+            <div class="form-actions">
+              @if (!enviando()) {
+                <a
+                  class="button secondary"
+                  [routerLink]="['/compras', datos.id]"
+                >
+                  Cancelar
+                </a>
+              }
+
+              <button
+                class="button primary"
+                type="submit"
+                [disabled]="solicitudForm.invalid || enviando()"
+              >
+                {{ enviando() ? 'Enviando…' : 'Enviar solicitud' }}
+              </button>
+            </div>
+          </fieldset>
+        </form>
+      </section>
+    }
+  }
+}
